@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Menu, X } from 'lucide-react';
+import ConnectWallet from '../connect-button';
 
 const NavBar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -29,9 +30,7 @@ const NavBar = () => {
           </a>
         </div>
         <div className="hidden md:block">
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200">
-            Connect Wallet
-          </button>
+          <ConnectWallet />
         </div>
         <div className="md:hidden">
           <button
