@@ -1,17 +1,19 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
 
 const FeaturedShows = () => {
   const shows = [
     {
-      id: 1,
+      id: "bb-naija-2024",
       title: "Big Brother Naija",
       description: "Vote for your favorite housemate and shape the game",
       image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop&crop=face",
       bgColor: "bg-emerald-500"
     },
     {
-      id: 2,
+      id: "survivor-legends",
       title: "Survivor",
       description: "Support your favorite castaway on their ultimate journey",
       image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=500&fit=crop&crop=face",
@@ -19,7 +21,7 @@ const FeaturedShows = () => {
       showLogo: true
     },
     {
-      id: 3,
+      id: "the-circle-influencers",
       title: "The Circle",
       description: "Choose the ultimate influencer in this game of social strategy",
       image: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&h=500&fit=crop&crop=face",
@@ -51,19 +53,21 @@ const FeaturedShows = () => {
         {/* Shows Container */}
         <div className="flex flex-col lg:flex-row lg:space-x-8 space-y-8 lg:space-y-0">
           {shows.map((show) => (
-            <div key={show.id} className="flex-1 group cursor-pointer">
+            <Link key={show.id} href={`/campaign/${show.id}`} className="flex-1 group cursor-pointer">
               <div className="bg-slate-800 rounded-2xl overflow-hidden hover:transform hover:scale-105 transition-all duration-300">
                 {/* Image Section */}
                 <div className={`relative h-80 lg:h-96 ${show.bgColor} flex items-center justify-center`}>
-                  <img 
+                  <Image 
                     src={show.image} 
                     alt={show.title}
+                    width={400}
+                    height={500}
                     className="w-full h-full object-cover"
                   />
                   {show.showLogo && (
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="bg-black bg-opacity-60 text-white px-4 py-2 rounded-lg font-bold text-lg">
-                        {show.id === 2 ? 'SURVIVOR' : 'THE CIRCLE'}
+                        {show.id === "survivor-legends" ? 'SURVIVOR' : 'THE CIRCLE'}
                       </div>
                     </div>
                   )}
@@ -79,7 +83,7 @@ const FeaturedShows = () => {
                   </p>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

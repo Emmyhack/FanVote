@@ -1,22 +1,22 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { Fanvote } from "../target/types/fanvote";
-import { 
-  PublicKey, 
-  Keypair, 
+import {
+  PublicKey,
+  Keypair,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
-  LAMPORTS_PER_SOL 
+  LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
-import { 
-  TOKEN_PROGRAM_ID, 
+import {
+  TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  createMint, 
-  createAccount, 
-  mintTo, 
+  createMint,
+  createAccount,
+  mintTo,
   getAccount,
   getAssociatedTokenAddress,
-  createAssociatedTokenAccountInstruction
+  createAssociatedTokenAccountInstruction,
 } from "@solana/spl-token";
 import { expect } from "chai";
 import { Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
@@ -27,13 +27,13 @@ describe("fanvote", () => {
   anchor.setProvider(provider);
 
   const program = anchor.workspace.Fanvote as Program<Fanvote>;
-  
+
   // Test accounts
   let campaignCreator: Keypair;
   let voter1: Keypair;
   let voter2: Keypair;
   let treasuryAuthority: Keypair;
-  
+
   // Token accounts
   let usdcMint: PublicKey;
   let campaignTokenAccount: PublicKey;
@@ -41,35 +41,47 @@ describe("fanvote", () => {
   let voter1TokenAccount: PublicKey;
   let voter2TokenAccount: PublicKey;
   let treasuryWithdrawAccount: PublicKey;
-  
+
   // Program derived addresses
   let campaignPda: PublicKey;
   let campaignBump: number;
   let treasuryAuthorityPda: PublicKey;
   let treasuryBump: number;
-  
+
   const campaignTitle = "Test Campaign";
   const startTime = Math.floor(Date.now() / 1000);
   const endTime = startTime + 86400; // 24 hours later
   const bannerUrl = "https://example.com/banner.jpg";
   const platformFeePercentage = 5; // 5%
-  
+
   before(async () => {
     // Create test keypairs
     campaignCreator = Keypair.generate();
     voter1 = Keypair.generate();
     voter2 = Keypair.generate();
     treasuryAuthority = Keypair.generate();
-    
+
     // Airdrop SOL to test accounts
-    await provider.connection.requestAirdrop(campaignCreator.publicKey, 2 * LAMPORTS_PER_SOL);
-    await provider.connection.requestAirdrop(voter1.publicKey, 2 * LAMPORTS_PER_SOL);
-    await provider.connection.requestAirdrop(voter2.publicKey, 2 * LAMPORTS_PER_SOL);
-    await provider.connection.requestAirdrop(treasuryAuthority.publicKey, 2 * LAMPORTS_PER_SOL);
-    
+    await provider.connection.requestAirdrop(
+      campaignCreator.publicKey,
+      2 * LAMPORTS_PER_SOL
+    );
+    await provider.connection.requestAirdrop(
+      voter1.publicKey,
+      2 * LAMPORTS_PER_SOL
+    );
+    await provider.connection.requestAirdrop(
+      voter2.publicKey,
+      2 * LAMPORTS_PER_SOL
+    );
+    await provider.connection.requestAirdrop(
+      treasuryAuthority.publicKey,
+      2 * LAMPORTS_PER_SOL
+    );
+
     // Wait for airdrop confirmations
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     // Create USDC mint
     usdcMint = await createMint(
       provider.connection,
@@ -78,7 +90,7 @@ describe("fanvote", () => {
       null,
       6 // USDC has 6 decimals
     );
-    
+
     // Find treasury authority PDA
     [treasuryAuthorityPda, treasuryBump] = PublicKey.findProgramAddressSync(
       [Buffer.from("treasury")],
@@ -97,12 +109,12 @@ describe("fanvote", () => {
       usdcMint,
       voter1.publicKey
     );
-    
+
     voter2TokenAccount = await getAssociatedTokenAddress(
       usdcMint,
       voter2.publicKey
     );
-    
+
     treasuryWithdrawAccount = await getAssociatedTokenAddress(
       usdcMint,
       treasuryAuthority.publicKey
@@ -123,12 +135,13 @@ describe("fanvote", () => {
       usdcMint
     );
 
-    const createTreasuryWithdrawAccountIx = createAssociatedTokenAccountInstruction(
-      campaignCreator.publicKey, // payer
-      treasuryWithdrawAccount,
-      treasuryAuthority.publicKey, // owner
-      usdcMint
-    );
+    const createTreasuryWithdrawAccountIx =
+      createAssociatedTokenAccountInstruction(
+        campaignCreator.publicKey, // payer
+        treasuryWithdrawAccount,
+        treasuryAuthority.publicKey, // owner
+        usdcMint
+      );
 
     // Create token accounts transaction
     const createTokenAccountsTx = new Transaction()
@@ -156,19 +169,21 @@ describe("fanvote", () => {
     );
 
     // CREATE THE PDA TOKEN ACCOUNTS - This was missing!
-    const createCampaignTokenAccountIx = createAssociatedTokenAccountInstruction(
-      campaignCreator.publicKey, // payer
-      campaignTokenAccount,
-      campaignPda, // owner (PDA)
-      usdcMint
-    );
+    const createCampaignTokenAccountIx =
+      createAssociatedTokenAccountInstruction(
+        campaignCreator.publicKey, // payer
+        campaignTokenAccount,
+        campaignPda, // owner (PDA)
+        usdcMint
+      );
 
-    const createTreasuryTokenAccountIx = createAssociatedTokenAccountInstruction(
-      campaignCreator.publicKey, // payer
-      platformTreasuryTokenAccount,
-      treasuryAuthorityPda, // owner (PDA)
-      usdcMint
-    );
+    const createTreasuryTokenAccountIx =
+      createAssociatedTokenAccountInstruction(
+        campaignCreator.publicKey, // payer
+        platformTreasuryTokenAccount,
+        treasuryAuthorityPda, // owner (PDA)
+        usdcMint
+      );
 
     const createPdaTokenAccountsTx = new Transaction()
       .add(createCampaignTokenAccountIx)
@@ -187,22 +202,20 @@ describe("fanvote", () => {
       usdcMint,
       voter1TokenAccount,
       campaignCreator,
-      1000 * 10**6 // 1000 USDC
+      1000 * 10 ** 6 // 1000 USDC
     );
-    
+
     await mintTo(
       provider.connection,
       campaignCreator,
       usdcMint,
       voter2TokenAccount,
       campaignCreator,
-      1000 * 10**6 // 1000 USDC
+      1000 * 10 ** 6 // 1000 USDC
     );
-    
+
     // Initialize the program
-    await program.methods
-      .initialize()
-      .rpc();
+    await program.methods.initialize().rpc();
   });
 
   it("Create a campaign", async () => {
@@ -230,7 +243,9 @@ describe("fanvote", () => {
     expect(campaign.bannerUrl).to.equal(bannerUrl);
     expect(campaign.platformFeePercentage).to.equal(platformFeePercentage);
     expect(campaign.isActive).to.be.true;
-    expect(campaign.creator.toString()).to.equal(campaignCreator.publicKey.toString());
+    expect(campaign.creator.toString()).to.equal(
+      campaignCreator.publicKey.toString()
+    );
     expect(campaign.totalVotes.toNumber()).to.equal(0);
     expect(campaign.contestantCount).to.equal(0);
   });
@@ -241,11 +256,7 @@ describe("fanvote", () => {
     const newFeePercentage = 10;
 
     await program.methods
-      .editCampaign(
-        new anchor.BN(newEndTime),
-        newBannerUrl,
-        newFeePercentage
-      )
+      .editCampaign(new anchor.BN(newEndTime), newBannerUrl, newFeePercentage)
       .accounts({
         campaign: campaignPda,
         user: campaignCreator.publicKey,
@@ -264,13 +275,13 @@ describe("fanvote", () => {
       {
         name: "Contestant 1",
         imageUrl: "https://example.com/contestant1.jpg",
-        bio: "Bio for contestant 1"
+        bio: "Bio for contestant 1",
       },
       {
-        name: "Contestant 2", 
+        name: "Contestant 2",
         imageUrl: "https://example.com/contestant2.jpg",
-        bio: "Bio for contestant 2"
-      }
+        bio: "Bio for contestant 2",
+      },
     ];
 
     for (let i = 0; i < contestants.length; i++) {
@@ -278,15 +289,11 @@ describe("fanvote", () => {
       const contestantIdBytes = new Uint8Array(4);
       contestantIdBytes[0] = i;
       contestantIdBytes[1] = 0;
-      contestantIdBytes[2] = 0; 
+      contestantIdBytes[2] = 0;
       contestantIdBytes[3] = 0;
 
       const [contestantPda] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("contestant"),
-          campaignPda.toBuffer(),
-          contestantIdBytes
-        ],
+        [Buffer.from("contestant"), campaignPda.toBuffer(), contestantIdBytes],
         program.programId
       );
 
@@ -320,7 +327,7 @@ describe("fanvote", () => {
   });
 
   it("Cast votes", async () => {
-    const voteAmount = 100 * 10**6; // 100 USDC
+    const voteAmount = 100 * 10 ** 6; // 100 USDC
     const contestant1Id = 0;
     const contestant2Id = 1;
 
@@ -339,20 +346,12 @@ describe("fanvote", () => {
 
     // Find PDAs for contestants and voters
     const [contestant1Pda] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from("contestant"),
-        campaignPda.toBuffer(),
-        contestant1IdBytes
-      ],
+      [Buffer.from("contestant"), campaignPda.toBuffer(), contestant1IdBytes],
       program.programId
     );
 
     const [contestant2Pda] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from("contestant"),
-        campaignPda.toBuffer(),
-        contestant2IdBytes
-      ],
+      [Buffer.from("contestant"), campaignPda.toBuffer(), contestant2IdBytes],
       program.programId
     );
 
@@ -360,7 +359,7 @@ describe("fanvote", () => {
       [
         Buffer.from("voter"),
         campaignPda.toBuffer(),
-        voter1.publicKey.toBuffer()
+        voter1.publicKey.toBuffer(),
       ],
       program.programId
     );
@@ -369,7 +368,7 @@ describe("fanvote", () => {
       [
         Buffer.from("voter"),
         campaignPda.toBuffer(),
-        voter2.publicKey.toBuffer()
+        voter2.publicKey.toBuffer(),
       ],
       program.programId
     );
@@ -427,13 +426,23 @@ describe("fanvote", () => {
     expect(voter2Account.totalUsdcVoted.toNumber()).to.equal(voteAmount);
 
     // FIXED: Use the updated fee percentage from edit campaign (10%)
-    const campaignTokenAccountInfo = await getAccount(provider.connection, campaignTokenAccount);
-    const expectedCampaignAmount = (voteAmount * 2) * (100 - 10) / 100; // 10% fee from edit
-    expect(Number(campaignTokenAccountInfo.amount)).to.equal(expectedCampaignAmount);
+    const campaignTokenAccountInfo = await getAccount(
+      provider.connection,
+      campaignTokenAccount
+    );
+    const expectedCampaignAmount = (voteAmount * 2 * (100 - 10)) / 100; // 10% fee from edit
+    expect(Number(campaignTokenAccountInfo.amount)).to.equal(
+      expectedCampaignAmount
+    );
 
-    const treasuryTokenAccountInfo = await getAccount(provider.connection, platformTreasuryTokenAccount);
-    const expectedTreasuryAmount = (voteAmount * 2) * 10 / 100; // 10% fee from edit
-    expect(Number(treasuryTokenAccountInfo.amount)).to.equal(expectedTreasuryAmount);
+    const treasuryTokenAccountInfo = await getAccount(
+      provider.connection,
+      platformTreasuryTokenAccount
+    );
+    const expectedTreasuryAmount = (voteAmount * 2 * 10) / 100; // 10% fee from edit
+    expect(Number(treasuryTokenAccountInfo.amount)).to.equal(
+      expectedTreasuryAmount
+    );
   });
 
   it("Edit contestant", async () => {
@@ -445,11 +454,7 @@ describe("fanvote", () => {
     contestant1IdBytes[3] = 0;
 
     const [contestant1Pda] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from("contestant"),
-        campaignPda.toBuffer(),
-        contestant1IdBytes
-      ],
+      [Buffer.from("contestant"), campaignPda.toBuffer(), contestant1IdBytes],
       program.programId
     );
 
@@ -500,7 +505,10 @@ describe("fanvote", () => {
   });
 
   it("Withdraw fees from treasury", async () => {
-    const treasuryTokenAccountInfo = await getAccount(provider.connection, platformTreasuryTokenAccount);
+    const treasuryTokenAccountInfo = await getAccount(
+      provider.connection,
+      platformTreasuryTokenAccount
+    );
     const withdrawAmount = Number(treasuryTokenAccountInfo.amount);
 
     await program.methods
@@ -516,10 +524,16 @@ describe("fanvote", () => {
       .rpc();
 
     // Verify tokens were withdrawn
-    const updatedTreasuryTokenAccountInfo = await getAccount(provider.connection, platformTreasuryTokenAccount);
+    const updatedTreasuryTokenAccountInfo = await getAccount(
+      provider.connection,
+      platformTreasuryTokenAccount
+    );
     expect(Number(updatedTreasuryTokenAccountInfo.amount)).to.equal(0);
 
-    const withdrawAccountInfo = await getAccount(provider.connection, treasuryWithdrawAccount);
+    const withdrawAccountInfo = await getAccount(
+      provider.connection,
+      treasuryWithdrawAccount
+    );
     expect(Number(withdrawAccountInfo.amount)).to.equal(withdrawAmount);
   });
 
@@ -534,7 +548,7 @@ describe("fanvote", () => {
       .signers([campaignCreator])
       .rpc();
 
-    const voteAmount = 50 * 10**6; // 50 USDC
+    const voteAmount = 50 * 10 ** 6; // 50 USDC
     const contestant1Id = 0;
     const contestant1IdBytes = new Uint8Array(4);
     contestant1IdBytes[0] = contestant1Id;
@@ -543,11 +557,7 @@ describe("fanvote", () => {
     contestant1IdBytes[3] = 0;
 
     const [contestant1Pda] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from("contestant"),
-        campaignPda.toBuffer(),
-        contestant1IdBytes
-      ],
+      [Buffer.from("contestant"), campaignPda.toBuffer(), contestant1IdBytes],
       program.programId
     );
 
@@ -555,7 +565,7 @@ describe("fanvote", () => {
       [
         Buffer.from("voter"),
         campaignPda.toBuffer(),
-        voter1.publicKey.toBuffer()
+        voter1.publicKey.toBuffer(),
       ],
       program.programId
     );
@@ -577,7 +587,7 @@ describe("fanvote", () => {
         })
         .signers([voter1])
         .rpc();
-      
+
       expect.fail("Should have failed to vote on paused campaign");
     } catch (error) {
       expect(error.message).to.include("CampaignNotActiveOrEnded");
@@ -586,8 +596,11 @@ describe("fanvote", () => {
 
   it("Fail unauthorized operations", async () => {
     const unauthorizedUser = Keypair.generate();
-    await provider.connection.requestAirdrop(unauthorizedUser.publicKey, LAMPORTS_PER_SOL);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await provider.connection.requestAirdrop(
+      unauthorizedUser.publicKey,
+      LAMPORTS_PER_SOL
+    );
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // Try to edit campaign with unauthorized user
     try {
@@ -599,7 +612,7 @@ describe("fanvote", () => {
         })
         .signers([unauthorizedUser])
         .rpc();
-      
+
       expect.fail("Should have failed with unauthorized user");
     } catch (error) {
       expect(error.message).to.include("Unauthorized");
