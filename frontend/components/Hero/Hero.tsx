@@ -1,5 +1,7 @@
 import React from 'react';
-import { Wallet, PlayCircle } from 'lucide-react';
+import { PlayCircle } from 'lucide-react';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import Link from 'next/link';
 
 const Hero = () => {
   return (
@@ -24,15 +26,14 @@ const Hero = () => {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300 flex items-center gap-3 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-            <Wallet size={24} />
-            Connect Wallet
-          </button>
+          <WalletMultiButton className="!bg-blue-600 !hover:bg-blue-700 !text-white !px-8 !py-4 !rounded-lg !font-semibold !text-lg !transition-all !duration-300 !flex !items-center !gap-3 !shadow-lg !hover:shadow-xl !transform !hover:-translate-y-1" />
           
-          <button className="bg-slate-800 hover:bg-slate-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300 flex items-center gap-3 border border-slate-600 hover:border-slate-500 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-            <PlayCircle size={24} />
-            Browse Shows
-          </button>
+          <Link href="/campaigns">
+            <button className="bg-slate-800 hover:bg-slate-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300 flex items-center gap-3 border border-slate-600 hover:border-slate-500 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+              <PlayCircle size={24} />
+              Browse Shows
+            </button>
+          </Link>
         </div>
 
         <div className="mt-16 flex justify-center space-x-8 opacity-30">
