@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Calendar, Users, Trophy, Clock, Eye } from 'lucide-react';
+import { Calendar, Users, Trophy, Clock, Eye, Search, Star } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -15,15 +15,20 @@ interface Campaign {
   isActive: boolean;
   contestantCount: number;
   category: string;
+  rating: number;
+  viewers: string;
+  featured: boolean;
 }
 
 const CampaignsPage = () => {
   const { connected } = useWallet();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'active' | 'upcoming' | 'ended'>('all');
+  const [filter, setFilter] = useState<'all' | 'active' | 'upcoming' | 'ended' | 'featured'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<'popular' | 'newest' | 'ending'>('popular');
 
-  // Mock data for now - will be replaced with actual Solana program calls
+  // Enhanced mock data with more details
   useEffect(() => {
     setTimeout(() => {
       setCampaigns([
@@ -37,7 +42,10 @@ const CampaignsPage = () => {
           totalVotes: 15420,
           isActive: true,
           contestantCount: 12,
-          category: 'Reality TV'
+          category: 'Reality TV',
+          rating: 4.8,
+          viewers: '2.5M',
+          featured: true
         },
         {
           id: 'survivor-legends',
@@ -49,7 +57,10 @@ const CampaignsPage = () => {
           totalVotes: 8930,
           isActive: true,
           contestantCount: 16,
-          category: 'Competition'
+          category: 'Competition',
+          rating: 4.9,
+          viewers: '1.8M',
+          featured: true
         },
         {
           id: 'the-circle-influencers',
@@ -61,7 +72,10 @@ const CampaignsPage = () => {
           totalVotes: 12650,
           isActive: true,
           contestantCount: 8,
-          category: 'Social Strategy'
+          category: 'Social Strategy',
+          rating: 4.7,
+          viewers: '1.2M',
+          featured: false
         },
         {
           id: 'dancing-stars',
@@ -73,7 +87,10 @@ const CampaignsPage = () => {
           totalVotes: 45320,
           isActive: false,
           contestantCount: 10,
-          category: 'Entertainment'
+          category: 'Entertainment',
+          rating: 4.6,
+          viewers: '3.1M',
+          featured: false
         },
         {
           id: 'masterchef-finale',
@@ -85,35 +102,72 @@ const CampaignsPage = () => {
           totalVotes: 0,
           isActive: false,
           contestantCount: 3,
-          category: 'Cooking'
+          category: 'Cooking',
+          rating: 4.8,
+          viewers: '1.5M',
+          featured: false
+        },
+        {
+          id: 'voice-competition',
+          title: 'The Voice: Season Finale',
+          description: 'Vote for the most talented vocalist in this epic singing competition finale.',
+          banner: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=400&fit=crop',
+          startTime: new Date('2024-05-01'),
+          endTime: new Date('2024-05-10'),
+          totalVotes: 28750,
+          isActive: true,
+          contestantCount: 4,
+          category: 'Music',
+          rating: 4.9,
+          viewers: '2.8M',
+          featured: true
         }
       ]);
       setLoading(false);
     }, 1000);
   }, []);
 
-  const filteredCampaigns = campaigns.filter(campaign => {
-    const now = new Date();
-    switch (filter) {
-      case 'active':
-        return campaign.isActive && campaign.endTime > now;
-      case 'upcoming':
-        return campaign.startTime > now;
-      case 'ended':
-        return campaign.endTime <= now;
-      default:
-        return true;
-    }
-  });
+  const filteredAndSortedCampaigns = campaigns
+    .filter(campaign => {
+      const matchesSearch = campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          campaign.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          campaign.category.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const now = new Date();
+      switch (filter) {
+        case 'active':
+          return campaign.isActive && campaign.endTime > now && matchesSearch;
+        case 'upcoming':
+          return campaign.startTime > now && matchesSearch;
+        case 'ended':
+          return campaign.endTime <= now && matchesSearch;
+        case 'featured':
+          return campaign.featured && matchesSearch;
+        default:
+          return matchesSearch;
+      }
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'popular':
+          return b.totalVotes - a.totalVotes;
+        case 'newest':
+          return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
+        case 'ending':
+          return new Date(a.endTime).getTime() - new Date(b.endTime).getTime();
+        default:
+          return 0;
+      }
+    });
 
   const getStatusBadge = (campaign: Campaign) => {
     const now = new Date();
     if (campaign.startTime > now) {
-      return <span className="bg-blue-500 text-white px-2 py-1 rounded-full text-xs">Upcoming</span>;
+      return <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-semibold">Upcoming</span>;
     } else if (campaign.isActive && campaign.endTime > now) {
-      return <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs">Active</span>;
+      return <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold">Active</span>;
     } else {
-      return <span className="bg-gray-500 text-white px-2 py-1 rounded-full text-xs">Ended</span>;
+      return <span className="bg-gray-500 text-white px-3 py-1 rounded-full text-xs font-semibold">Ended</span>;
     }
   };
 
@@ -125,83 +179,150 @@ const CampaignsPage = () => {
     });
   };
 
+  const getDaysRemaining = (endDate: Date) => {
+    const now = new Date();
+    const diffTime = endDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return Math.max(0, diffDays);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="text-white text-xl">Loading campaigns...</div>
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-white text-xl">Loading campaigns...</div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-slate-900">
-      {/* Header */}
-      <div className="bg-slate-800 py-16">
+      {/* Enhanced Header */}
+      <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-slate-900 py-20">
         <div className="max-w-7xl mx-auto px-4">
-          <h1 className="text-4xl lg:text-6xl font-bold text-white mb-4">
-            Active Campaigns
-          </h1>
-          <p className="text-gray-300 text-lg lg:text-xl max-w-3xl">
-            Discover and participate in exciting voting campaigns. Your voice matters in shaping entertainment.
-          </p>
+          <div className="text-center mb-8">
+            <h1 className="text-4xl lg:text-6xl font-bold text-white mb-4">
+              Active Campaigns
+            </h1>
+            <p className="text-gray-300 text-lg lg:text-xl max-w-3xl mx-auto">
+              Discover and participate in exciting voting campaigns. Your voice matters in shaping entertainment.
+            </p>
+          </div>
+
+          {/* Enhanced Search and Filter */}
+          <div className="max-w-4xl mx-auto">
+            <div className="flex flex-col lg:flex-row gap-4 mb-8">
+              {/* Search Bar */}
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search campaigns..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-slate-800 text-white pl-10 pr-4 py-3 rounded-xl border border-slate-700 focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Sort Dropdown */}
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="bg-slate-800 text-white px-4 py-3 rounded-xl border border-slate-700 focus:border-blue-500 focus:outline-none"
+              >
+                <option value="popular">Most Popular</option>
+                <option value="newest">Newest</option>
+                <option value="ending">Ending Soon</option>
+              </select>
+            </div>
+
+            {/* Filter Tabs */}
+            <div className="flex flex-wrap gap-3 justify-center">
+              {[
+                { key: 'all', label: 'All Campaigns' },
+                { key: 'featured', label: 'Featured' },
+                { key: 'active', label: 'Active' },
+                { key: 'upcoming', label: 'Upcoming' },
+                { key: 'ended', label: 'Ended' }
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setFilter(tab.key as typeof filter)}
+                  className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+                    filter === tab.key
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                      : 'bg-slate-800 text-gray-300 hover:bg-slate-700 border border-slate-700'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Filter Tabs */}
-        <div className="flex flex-wrap gap-4 mb-8">
-          {['all', 'active', 'upcoming', 'ended'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setFilter(tab as typeof filter)}
-              className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                filter === tab
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-800 text-gray-300 hover:bg-slate-700'
-              }`}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
-        </div>
-
+      <div className="max-w-7xl mx-auto px-4 py-12">
         {/* Campaigns Grid */}
-        {filteredCampaigns.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-gray-400 text-lg">No campaigns found for the selected filter.</p>
+        {filteredAndSortedCampaigns.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="w-24 h-24 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Search className="w-12 h-12 text-gray-400" />
+            </div>
+            <p className="text-gray-400 text-xl mb-4">No campaigns found</p>
+            <p className="text-gray-500">Try adjusting your search or filter criteria</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredCampaigns.map((campaign) => (
-              <div key={campaign.id} className="bg-slate-800 rounded-lg overflow-hidden hover:transform hover:scale-105 transition-all duration-300 group">
-                {/* Campaign Banner */}
+            {filteredAndSortedCampaigns.map((campaign) => (
+              <div key={campaign.id} className="bg-slate-800 rounded-2xl overflow-hidden hover:transform hover:scale-105 transition-all duration-500 shadow-2xl hover:shadow-blue-500/20 border border-slate-700 hover:border-slate-600 group">
+                {/* Enhanced Campaign Banner */}
                 <div className="relative h-48 overflow-hidden">
                   <Image
                     src={campaign.banner}
                     alt={campaign.title}
                     fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-300"
+                    className="object-cover group-hover:scale-110 transition-transform duration-500"
                   />
-                  <div className="absolute top-4 left-4">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                  
+                  {/* Status and Featured Badges */}
+                  <div className="absolute top-4 left-4 flex gap-2">
                     {getStatusBadge(campaign)}
+                    {campaign.featured && (
+                      <span className="bg-yellow-500 text-black px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                        <Star className="w-3 h-3 fill-current" />
+                        Featured
+                      </span>
+                    )}
                   </div>
+                  
+                  {/* Category Badge */}
                   <div className="absolute top-4 right-4">
-                    <span className="bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
+                    <span className="bg-black bg-opacity-60 text-white px-3 py-1 rounded-full text-xs font-semibold">
                       {campaign.category}
                     </span>
                   </div>
+
+                  {/* Rating */}
+                  <div className="absolute bottom-4 left-4 flex items-center space-x-1 bg-black bg-opacity-60 px-2 py-1 rounded">
+                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                    <span className="text-white text-sm font-semibold">{campaign.rating}</span>
+                  </div>
                 </div>
 
-                {/* Campaign Info */}
+                {/* Enhanced Campaign Info */}
                 <div className="p-6">
-                  <h3 className="text-xl font-bold text-white mb-2 line-clamp-1">
+                  <h3 className="text-xl font-bold text-white mb-2 line-clamp-1 group-hover:text-blue-400 transition-colors">
                     {campaign.title}
                   </h3>
                   <p className="text-gray-400 text-sm mb-4 line-clamp-2">
                     {campaign.description}
                   </p>
 
-                  {/* Stats */}
+                  {/* Enhanced Stats */}
                   <div className="grid grid-cols-2 gap-4 mb-6">
                     <div className="flex items-center space-x-2">
                       <Users className="w-4 h-4 text-blue-400" />
@@ -224,14 +345,14 @@ const CampaignsPage = () => {
                     <div className="flex items-center space-x-2">
                       <Clock className="w-4 h-4 text-red-400" />
                       <span className="text-gray-300 text-sm">
-                        {formatDate(campaign.endTime)}
+                        {getDaysRemaining(campaign.endTime)} days left
                       </span>
                     </div>
                   </div>
 
-                  {/* Action Button */}
+                  {/* Enhanced Action Button */}
                   <Link href={`/campaign/${campaign.id}`}>
-                    <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2">
+                    <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-blue-500/25 transform hover:-translate-y-1">
                       <Eye className="w-4 h-4" />
                       <span>View Campaign</span>
                     </button>
@@ -242,16 +363,17 @@ const CampaignsPage = () => {
           </div>
         )}
 
-        {/* Call to Action */}
+        {/* Enhanced Call to Action */}
         {!connected && (
-          <div className="mt-16 bg-slate-800 rounded-lg p-8 text-center">
+          <div className="mt-16 bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-blue-500/30 rounded-2xl p-8 text-center">
             <h2 className="text-2xl font-bold text-white mb-4">
               Ready to Start Voting?
             </h2>
-            <p className="text-gray-400 mb-6">
-              Connect your wallet to participate in any of these exciting campaigns and make your voice heard.
+            <p className="text-gray-400 mb-6 max-w-2xl mx-auto">
+              Connect your wallet to participate in any of these exciting campaigns and make your voice heard. 
+              Join thousands of voters already making a difference.
             </p>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors">
+            <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 shadow-2xl hover:shadow-blue-500/25 transform hover:-translate-y-1">
               Connect Wallet to Vote
             </button>
           </div>
