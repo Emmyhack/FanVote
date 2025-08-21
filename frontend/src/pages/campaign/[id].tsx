@@ -4,6 +4,8 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { Vote, Star, Trophy, Users, Timer, DollarSign, Eye } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { GatewayStatus, useGateway } from '@civic/solana-gateway-react';
+import CivicSignInButton from '../../../components/Auth/CivicSignInButton';
 
 interface Contestant {
   id: number;
@@ -36,6 +38,7 @@ const CampaignPage = () => {
   const router = useRouter();
   const { id } = router.query;
   const { connected } = useWallet();
+  const { gatewayStatus } = useGateway();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedContestant, setSelectedContestant] = useState<number | null>(null);
@@ -111,6 +114,11 @@ const CampaignPage = () => {
   const handleVote = async () => {
     if (!connected || !selectedContestant || !campaign) {
       alert('Please connect your wallet and select a contestant');
+      return;
+    }
+
+    if (gatewayStatus !== GatewayStatus.ACTIVE) {
+      alert('Please verify with Civic before voting');
       return;
     }
 
@@ -316,6 +324,16 @@ const CampaignPage = () => {
                   <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300">
                     Connect Wallet
                   </button>
+                </div>
+              ) : gatewayStatus !== GatewayStatus.ACTIVE ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Vote className="w-8 h-8 text-emerald-400" />
+                  </div>
+                  <p className="text-gray-400 mb-4">Verify with Civic to vote</p>
+                  <div className="flex justify-center">
+                    <CivicSignInButton />
+                  </div>
                 </div>
               ) : !isVotingOpen ? (
                 <div className="text-center py-8">

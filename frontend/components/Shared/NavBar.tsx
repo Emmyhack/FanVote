@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { Menu, X, Home, Users, Settings, Star } from 'lucide-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import Link from 'next/link';
+import CivicSignInButton from '../Auth/CivicSignInButton';
+import CivicAuthButtons from '../Auth/CivicAuthButtons';
 
 const NavBar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const civicClientId = process.env.NEXT_PUBLIC_CIVIC_CLIENT_ID;
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -53,8 +56,10 @@ const NavBar = () => {
             })}
           </div>
 
-          {/* Desktop Wallet Button */}
-          <div className="hidden md:block">
+          {/* Desktop Actions */}
+          <div className="hidden md:flex items-center gap-3">
+            {civicClientId ? <CivicAuthButtons /> : null}
+            <CivicSignInButton size="sm" />
             <WalletMultiButton className="!bg-gradient-to-r !from-blue-600 !to-purple-600 !hover:from-blue-700 !hover:to-purple-700 !text-white !px-6 !py-3 !rounded-xl !font-semibold !transition-all !duration-300 !flex !items-center !gap-2 !shadow-lg !hover:shadow-blue-500/25 !transform !hover:-translate-y-1 !border-0" />
           </div>
 
@@ -88,8 +93,10 @@ const NavBar = () => {
                 );
               })}
               
-              {/* Mobile Wallet Button */}
-              <div className="pt-4 border-t border-slate-800">
+              {/* Mobile Actions */}
+              <div className="pt-4 border-t border-slate-800 space-y-3">
+                {civicClientId ? <CivicAuthButtons /> : null}
+                <CivicSignInButton fullWidth />
                 <WalletMultiButton className="!bg-gradient-to-r !from-blue-600 !to-purple-600 !hover:from-blue-700 !hover:to-purple-700 !text-white !px-6 !py-3 !rounded-xl !font-semibold !transition-all !duration-300 !flex !items-center !gap-2 !shadow-lg !hover:shadow-blue-500/25 !w-full !justify-center" />
               </div>
             </div>
