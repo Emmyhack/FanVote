@@ -2,7 +2,7 @@ import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import Layout from "../../components/Shared/Layout";
 import { WalletContextProvider } from "../contexts/WalletContextProvider";
-import { CivicAuthProvider } from "@civic/auth/react";
+import CivicAuthProviderWrapper from "../../components/Auth/CivicAuthProviderWrapper";
 
 export default function App({ Component, pageProps }: AppProps) {
   const civicClientId = process.env.NEXT_PUBLIC_CIVIC_CLIENT_ID;
@@ -14,9 +14,9 @@ export default function App({ Component, pageProps }: AppProps) {
     </WalletContextProvider>
   );
 
-  return civicClientId ? (
-    <CivicAuthProvider clientId={civicClientId}>
+  return (
+    <CivicAuthProviderWrapper clientId={civicClientId}>
       {AppTree}
-    </CivicAuthProvider>
-  ) : AppTree;
+    </CivicAuthProviderWrapper>
+  );
 }

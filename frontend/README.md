@@ -12,15 +12,13 @@ npm run dev
 
 Copy `.env.local.example` to `.env.local` and set:
 
-- `NEXT_PUBLIC_CIVIC_GATEKEEPER_NETWORK` – Civic Pass Gatekeeper Network public key (Devnet example provided). If omitted, Civic gating is disabled.
+- `NEXT_PUBLIC_CIVIC_CLIENT_ID` – Enables Civic Auth (email/social) sign-in UI and session
+- `NEXT_PUBLIC_CIVIC_GATEKEEPER_NETWORK` – Civic Pass Gatekeeper Network public key (Devnet example provided). If omitted, a devnet default is used for testing
 
-## Civic Verification
+## Auth
 
-This app integrates Civic Pass for verification:
-
-- `GatewayProvider` wraps the wallet context when `NEXT_PUBLIC_CIVIC_GATEKEEPER_NETWORK` is set
-- Use the Verify button in the navbar or on gated pages
-- Admin and Voting require an ACTIVE Civic status
+- Civic Auth (email/social): Wraps the app with `CivicAuthProvider` when `NEXT_PUBLIC_CIVIC_CLIENT_ID` is set. Navbar shows Sign in/Sign out via `CivicAuthButtons`
+- Civic Pass (wallet verification): `GatewayProvider` wraps wallet context. Admin and Voting pages require `GatewayStatus.ACTIVE`
 
 ## Build
 
