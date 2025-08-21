@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Plus, Calendar, Image as ImageIcon, Users, Settings, TrendingUp, DollarSign, Activity, Star, Eye } from 'lucide-react';
+import { GatewayStatus, useGateway } from '@civic/solana-gateway-react';
+import CivicSignInButton from '../../components/Auth/CivicSignInButton';
 
 const AdminPage = () => {
   const { connected } = useWallet();
+  const { gatewayStatus } = useGateway();
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -28,6 +31,11 @@ const AdminPage = () => {
     
     if (!connected) {
       alert('Please connect your wallet to create a campaign');
+      return;
+    }
+
+    if (gatewayStatus !== GatewayStatus.ACTIVE) {
+      alert('Please verify with Civic to access admin features');
       return;
     }
 
@@ -74,6 +82,25 @@ const AdminPage = () => {
           <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300">
             Connect Wallet
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (gatewayStatus !== GatewayStatus.ACTIVE) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 text-center max-w-md border border-slate-700">
+          <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Settings className="w-8 h-8 text-gray-400" />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-4">Civic Verification Required</h1>
+          <p className="text-gray-400 mb-6">
+            Please verify with Civic to access admin features.
+          </p>
+          <div className="flex justify-center">
+            <CivicSignInButton size="lg" />
+          </div>
         </div>
       </div>
     );
