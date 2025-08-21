@@ -3,6 +3,7 @@ import { Menu, X, Home, Users, Settings, Star } from 'lucide-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import Link from 'next/link';
 import CivicSignInButton from '../Auth/CivicSignInButton';
+import CivicAuthButtons from '../Auth/CivicAuthButtons';
 
 const NavBar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -56,6 +57,7 @@ const NavBar = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
+            <CivicAuthButtons />
             <CivicSignInButton size="sm" />
             <WalletMultiButton className="!bg-gradient-to-r !from-blue-600 !to-purple-600 !hover:from-blue-700 !hover:to-purple-700 !text-white !px-6 !py-3 !rounded-xl !font-semibold !transition-all !duration-300 !flex !items-center !gap-2 !shadow-lg !hover:shadow-blue-500/25 !transform !hover:-translate-y-1 !border-0" />
           </div>
@@ -92,6 +94,7 @@ const NavBar = () => {
               
               {/* Mobile Actions */}
               <div className="pt-4 border-t border-slate-800 space-y-3">
+                <CivicAuthButtons />
                 <CivicSignInButton fullWidth />
                 <WalletMultiButton className="!bg-gradient-to-r !from-blue-600 !to-purple-600 !hover:from-blue-700 !hover:to-purple-700 !text-white !px-6 !py-3 !rounded-xl !font-semibold !transition-all !duration-300 !flex !items-center !gap-2 !shadow-lg !hover:shadow-blue-500/25 !w-full !justify-center" />
               </div>
