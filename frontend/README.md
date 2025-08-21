@@ -26,3 +26,7 @@ Copy `.env.local.example` to `.env.local` and set:
 npm run build
 npm start
 ```
+
+## CI/CD (Vercel)
+
+- Vercel uses `npm install` by default. We set `legacy-peer-deps=true` in `.npmrc` to resolve React 18 peer constraints from Civic packages when using React 19.
